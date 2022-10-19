@@ -1,0 +1,30 @@
+- hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Create key pair
+      ec2_key:
+        name: my_keypair
+        region: us-east-1
+      register: keyout
+
+    - name: Save the key
+      copy:
+        content: "{{keyout.key.private_key}}"
+        dest: ./sample.pem
+      when: keyout.changed == True
+
+    - name: Run EC2 instance
+      ec2:
+        key_name: my_keypair
+        instance_type: t2.micro
+        image: ami-08c40ec9ead489470
+        wait: yes
+        exact_count: 1
+        region: us-east-1
+        instance_tags:
+          Name: db01
+          db: postgres
+        count_tag:
+          Name: db01
+          db: postgres
+
